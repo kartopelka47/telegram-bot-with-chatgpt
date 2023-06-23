@@ -82,15 +82,16 @@ async def search_query(message: types.Message, state: FSMContext):
 
     chat = chatGPT.GPT(OPENAI_API_TOKEN, message.text)
     chat.request_text = message.text
-    loop = asyncio.get_event_loop()
-    task = loop.create_task(await chat.write_request())
-    loop.run_until_complete(task)
+    # loop = asyncio.get_event_loop()
+    # task = loop.create_task(await chat.write_request())
+    # loop.run_until_complete(task)
+    response = await chat.write_request()
     # request_task = await asyncio.create_task(chat.write_request())
     # asyncio.run(request_task)
     # request_task = await asyncio.create_task(chatGPT.write_request(OPENAI_API_TOKEN, message.text))
     # chatGPT_text = asyncio.run(request_task)
     print(chat.received_text)
-    await bot.send_message(user.id, chat.received_text)
+    await bot.send_message(user.id, response)
     # await bot.send_message(user.id, chat.received_text if chat.received_text is not None else "Повторіть запит пізніше")
     await state.finish()
 

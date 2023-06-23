@@ -1,5 +1,7 @@
 import openai
 
+from asyncio.threads import to_thread
+
 class GPT:
     def __init__(self, token, request_text):
         self.received_text = None
@@ -14,8 +16,7 @@ class GPT:
         """
         openai.api_key = self.token
         MODEL = "gpt-3.5-turbo"
-        response = openai.ChatCompletion.create(
-            model=MODEL,
+        response = await to_thread(openai.ChatCompletion.create, model=MODEL,
             messages=[
                 {"role": "user", "content": self.request_text}
                 # {"role": "system", "content": "You should only answer speak in germany"}

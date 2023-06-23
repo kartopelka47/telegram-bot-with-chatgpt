@@ -1,4 +1,3 @@
-import json
 import sqlite3
 
 DATA_FILE_PATH = "users_info.sqlite"

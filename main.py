@@ -1,20 +1,13 @@
-import openai
 import os
-import logging
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher.filters.state import State
 import logging
-import aiogram.utils.markdown as md
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ParseMode
 import localization
 import chatGPT
 import user_data
 import menu
-import asyncio
 
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")  # Telegram_API_Token
 OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")  # openAI_API_Token
@@ -82,14 +75,7 @@ async def search_query(message: types.Message, state: FSMContext):
 
     chat = chatGPT.GPT(OPENAI_API_TOKEN, message.text)
     chat.request_text = message.text
-    # loop = asyncio.get_event_loop()
-    # task = loop.create_task(await chat.write_request())
-    # loop.run_until_complete(task)
     response = await chat.write_request()
-    # request_task = await asyncio.create_task(chat.write_request())
-    # asyncio.run(request_task)
-    # request_task = await asyncio.create_task(chatGPT.write_request(OPENAI_API_TOKEN, message.text))
-    # chatGPT_text = asyncio.run(request_task)
     print(chat.received_text)
     await bot.send_message(user.id, response)
     # await bot.send_message(user.id, chat.received_text if chat.received_text is not None else "Повторіть запит пізніше")
@@ -99,8 +85,6 @@ async def search_query(message: types.Message, state: FSMContext):
 @dp.message_handler(types.ChatType.is_private, commands="start")
 async def start_command(message: types.Message):
     user = user_data.User(message.from_user.id, "en", str(message.date))
-
-    # load data about current user
     if database.IsNewbie(user.id):
         database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`) 
                 VALUES ('{user.id}','{user.language}','{user.join_date}')""")
@@ -118,7 +102,6 @@ async def start_command(message: types.Message):
 @dp.callback_query_handler()
 async def callback_handler(callback_query: types.CallbackQuery):
     user = user_data.User(callback_query.from_user.id, "en", str(callback_query.message.date))
-    # load data about current user
     if database.IsNewbie(user.id):
         database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`) 
                 VALUES ('{user.id}','{user.language}','{user.join_date}')""")
@@ -131,7 +114,6 @@ async def callback_handler(callback_query: types.CallbackQuery):
         user = user_data.User(user_id, user_language, user_join_date)
 
     if callback_query.data == "uk" or "en":
-        # user = database.LoadUser(callback_query.from_user.id)
         user.language = callback_query.data
         database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.id}'")
 

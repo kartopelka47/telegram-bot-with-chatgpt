@@ -1,10 +1,15 @@
+import os
 import sqlite3
+import pyargon2
 
 DATA_FILE_PATH = "users_info.sqlite"
+HASH_SALT = str(os.environ.get("SALT"))
 
-class User():
-    def __init__(self, id, language, join_date):
+
+class User:
+    def __init__(self, id, language, join_date, gpt_type):
         """
+        :type gpt_type: str
         :type language: str
         :type join_date: str or int
         :type id: str or int
@@ -12,18 +17,18 @@ class User():
         self.id = id
         self.language = language
         self.join_date = str(join_date)
+        self.hash_id = hash_text(str(id), str(HASH_SALT))
+        self.GPT_type = gpt_type
 
-class DataBase():
-    def __init__(self,data_path):
+
+class DataBase:
+    def __init__(self, data_path):
         self.data_path = data_path
-        # self.user_id = user_id
-        # self.data = self.getUser(
-        #                     f"SELECT `user_id`, `language`, `join_date` FROM `user` WHERE `user_id` = '{}'")
 
     def IsNewbie(self, id):
         user = self.getUser(
             f"select `user_id` from `user` where `user_id` = '{id}'")
-        if(user == None):
+        if not user:
             return True
         return False
 
@@ -44,35 +49,35 @@ class DataBase():
         DbCursor.close()
         sqliteConnection.close()
 
-    # def __init__(self, data_path):
-    #     self.data_path = data_path
-    #
-    #     with open(data_path, 'r+') as file:
-    #         file_content = file.read()
-    #         if len(file_content) == 0 or file_content.isspace():
-    #             self.data = {}
-    #             file.write(json.dumps(self.data))
-    #         else:
-    #             self.data = json.loads(file_content)
-    #
-    # def Update(self):
-    #     with open(self.data_path, "w+") as file:
-    #         json.dump(self.data, file)
-    #
-    # def IsNewbie(self, id):
-    #     if str(id) in self.data:
-    #         return False
-    #
-    #     return True
-    #
-    # def UpdateUser(self, user):
-    #     self.data[user.id] = {"language": user.language,
-    #                           "join_date":user.join_date}
-    #     self.Update()
-    #
-    # def LoadUser(self, id):
-    #     user_data = self.data[str(id)]
-    #
-    #     return User(id,
-    #                 user_data["language"],
-    #                 user_data["join_date"])
+
+def user_login(database, user_id, login_date, gpt_type="default") -> User:
+    """
+    :type database: DataBase
+    :type user_id: str or int
+    :type login_date: str
+    :type gpt_type: str
+    """
+    user = User(user_id, "en", str(login_date), gpt_type)
+
+    # load data about current user
+    if database.IsNewbie(user.hash_id):
+        database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`,`gpt_type`)
+                        VALUES ('{user.hash_id}','{user.language}','{user.join_date}','{user.GPT_type}')""")
+    else:
+        received_user_info = database.getUser(
+            f"select `language`,`join_date`,`gpt_type` from `user` where `user_id` = '{user.hash_id}'")
+        user_language = received_user_info[0]
+        user_join_date = received_user_info[1]
+        user_gpt_type = received_user_info[2]
+        user = User(user_id, user_language, user_join_date, user_gpt_type)
+    return user
+
+
+def hash_text(text, salt) -> str:
+    """
+    :type text: str
+    :type salt: str
+    """
+    _hash_text = pyargon2.hash(str(text), str(salt), hash_len=32, time_cost=1,
+                               memory_cost=16, variant="id", parallelism=2)
+    return _hash_text

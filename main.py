@@ -1,4 +1,7 @@
 import os
+
+import aiogram
+import openai
 from aiogram import Bot, Dispatcher, executor, types
 import logging
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -9,8 +12,12 @@ import chatGPT
 import user_data
 import menu
 
+BOT_NAME = os.environ.get("BOT_NAME")
+
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")  # Telegram_API_Token
 OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")  # openAI_API_Token
+ADMIN_USER = os.environ.get("ADMIN_USER")
+HASH_SALT = os.environ.get("SALT")
 database = user_data.DataBase(user_data.DATA_FILE_PATH)
 
 storage = MemoryStorage()
@@ -19,104 +26,133 @@ logging.basicConfig(level=logging.INFO)
 
 class States(StatesGroup):
     search_info = State()
+    feedback_state = State()
+    send_message_state = State()
 
 
 bot = Bot(token=TELEGRAM_API_TOKEN)
 dp = Dispatcher(bot, storage=storage)
-# chatGPT = chatGPT.GPT(OPENAI_API_TOKEN, None)
+
+
+async def check_message_for_func(message, state):
+    if message.text == "/search":
+        await state.finish()
+        await search_command(message)
+        return True
+    elif message.text == "/start":
+        await state.finish()
+        await start_command(message)
+        return True
+    elif message.text == "/info":
+        await state.finish()
+        await info_about_bot(message)
+        return True
+    elif message.text == "/commands":
+        await state.finish()
+        await commands(message)
+        return True
+    elif message.text == "/feedback":
+        await state.finish()
+        await feedback(message)
+        return True
+    elif message.text == "/language":
+        await state.finish()
+        await choose_language(message)
+        return True
+
+
+@dp.message_handler(types.ChatType.is_private, commands="info")
+async def info_about_bot(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    await bot.send_message(user.id, localization.info[user.language])
+
+
+@dp.message_handler(types.ChatType.is_private, commands="commands")
+async def commands(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    await bot.send_message(user.id, localization.commands_list[user.language])
+
+
+@dp.message_handler(types.ChatType.is_private, commands="feedback")
+async def feedback(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    await States.feedback_state.set()
+    await bot.send_message(user.id, localization.feedback[user.language])
+
+
+@dp.message_handler(types.ChatType.is_private, commands="language")
+async def choose_language(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+
+    await bot.send_message(user.id, localization.choose_language[user.language],
+                           reply_markup=menu.get_language_menu())
+
 
 @dp.message_handler(types.ChatType.is_private, commands="search")
 async def search_command(message: types.Message):
-    user = user_data.User(message.from_user.id, "en", str(message.date))
-
-    # load data about current user
-    if database.IsNewbie(user.id):
-        database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`)
-        VALUES ('{user.id}','{user.language}','{user.join_date}')""")
-    else:
-        received_user_info = database.getUser(
-            f"select `user_id`, `language`,`join_date` from `user` where `user_id` = '{user.id}'")
-        user_id = received_user_info[0]
-        user_language = received_user_info[1]
-        user_join_date = received_user_info[2]
-        user = user_data.User(user_id, user_language, user_join_date)
-
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
     await States.search_info.set()
     await bot.send_message(user.id, localization.write_search_query[user.language])
 
 
+@dp.message_handler(state=States.feedback_state)
+async def get_feedback(message: types.Message, state: FSMContext):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    admin_user = user_data.user_login(database, ADMIN_USER, message.date.strftime("%H:%M %d.%m.%y"))
+
+    if await check_message_for_func(message, state):
+        return
+
+    await bot.send_message(admin_user.id, f"""
+    {localization.report[admin_user.language]}
+{message.date.strftime("%H:%M %d.%m.%y")}
+{message.text}""", reply_markup=menu.user_from_tgUrl(admin_user.language, message.from_user.url))
+    await bot.send_message(user.id, localization.thanks_for_report[user.language])
+
+
 @dp.message_handler(state=States.search_info)
 async def search_query(message: types.Message, state: FSMContext):
-    user = user_data.User(message.from_user.id, "en", str(message.date))
-
-
-    # load data about current user
-    if database.IsNewbie(user.id):
-        database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`) 
-                VALUES ('{user.id}','{user.language}','{user.join_date}')""")
-    else:
-        received_user_info = database.getUser(
-            f"select `user_id`, `language`,`join_date` from `user` where `user_id` = '{user.id}'")
-        user_id = received_user_info[0]
-        user_language = received_user_info[1]
-        user_join_date = received_user_info[2]
-        user = user_data.User(user_id, user_language, user_join_date)
-
-    if message.text == "/search":
-        await search_command(message)
-        await state.finish()
-        return
-    elif message.text == "/start":
-        await start_command(message)
-        await state.finish()
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    if await check_message_for_func(message, state):
         return
 
     await bot.send_message(user.id, localization.processing_request[user.language])
 
     chat = chatGPT.GPT(OPENAI_API_TOKEN, message.text)
     chat.request_text = message.text
-    response = await chat.write_request()
-    print(chat.received_text)
+    try:
+        response = await chat.standart_request()
+    except openai.error.RateLimitError:
+        response = localization.try_again_later[user.language]
+    except openai.error.ServiceUnavailableError:
+        response = localization.service_unavailable_error[user.language]
     await bot.send_message(user.id, response)
-    # await bot.send_message(user.id, chat.received_text if chat.received_text is not None else "Повторіть запит пізніше")
     await state.finish()
 
 
 @dp.message_handler(types.ChatType.is_private, commands="start")
 async def start_command(message: types.Message):
-    user = user_data.User(message.from_user.id, "en", str(message.date))
-    if database.IsNewbie(user.id):
-        database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`) 
-                VALUES ('{user.id}','{user.language}','{user.join_date}')""")
-    else:
-        received_user_info = database.getUser(
-            f"select `user_id`, `language`,`join_date` from `user` where `user_id` = '{user.id}'")
-        user_id = received_user_info[0]
-        user_language = received_user_info[1]
-        user_join_date = received_user_info[2]
-        user = user_data.User(user_id, user_language, user_join_date)
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+    if database.IsNewbie(user.hash_id):
+        await bot.send_message(user.id, localization.choose_language[user.language],
+                               reply_markup=menu.get_language_menu())
+    await bot.send_message(user.id, localization.greetings[user.language])
 
-    await bot.send_message(user.id, localization.choose_language[user.language], reply_markup=menu.get_language_menu())
+
+@dp.message_handler(types.ChatType.is_private, commands="type")
+async def change_type(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
+#     доробити
 
 
 @dp.callback_query_handler()
 async def callback_handler(callback_query: types.CallbackQuery):
-    user = user_data.User(callback_query.from_user.id, "en", str(callback_query.message.date))
-    if database.IsNewbie(user.id):
-        database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`) 
-                VALUES ('{user.id}','{user.language}','{user.join_date}')""")
-    else:
-        received_user_info = database.getUser(
-            f"select `user_id`, `language`,`join_date` from `user` where `user_id` = '{user.id}'")
-        user_id = received_user_info[0]
-        user_language = received_user_info[1]
-        user_join_date = received_user_info[2]
-        user = user_data.User(user_id, user_language, user_join_date)
+    user = user_data.user_login(database, callback_query.from_user.id,
+                                callback_query.message.date.strftime("%H:%M %d.%m.%y"))
 
     if callback_query.data == "uk" or "en":
         user.language = callback_query.data
-        database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.id}'")
-
+        database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.hash_id}'")
         await bot.send_message(user.id, localization.choosed_language[user.language])
         return
 

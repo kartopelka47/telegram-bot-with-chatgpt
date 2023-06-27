@@ -7,17 +7,17 @@ HASH_SALT = str(os.environ.get("SALT"))
 
 
 class User:
-    def __init__(self, id, language, join_date, gpt_type):
+    def __init__(self, user_id, language, join_date, gpt_type):
         """
+        :type user_id: str | int
         :type gpt_type: str
         :type language: str
-        :type join_date: str or int
-        :type id: str or int
+        :type join_date: str | int
         """
-        self.id = id
+        self.id = user_id
         self.language = language
         self.join_date = str(join_date)
-        self.hash_id = hash_text(str(id), str(HASH_SALT))
+        self.hash_id = hash_text(str(user_id), str(HASH_SALT))
         self.GPT_type = gpt_type
 
 

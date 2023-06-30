@@ -3,8 +3,15 @@ import sqlite3
 import pyargon2
 
 DATA_FILE_PATH = "users_info.sqlite"
-HASH_SALT = str(os.environ.get("SALT"))
-
+HASH_SALT = os.environ.get("SALT")
+CREATE_TABLE_REQUEST = """CREATE TABLE "user" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"user_id"	TEXT NOT NULL UNIQUE,
+	"language"	INTEGER NOT NULL DEFAULT 'en',
+	"join_date"	TEXT NOT NULL,
+	"gpt_type"	TEXT NOT NULL DEFAULT 'default_gpt',
+	PRIMARY KEY("id" AUTOINCREMENT)
+)"""
 
 class User:
     def __init__(self, user_id, language, join_date, gpt_type):
@@ -35,7 +42,11 @@ class DataBase:
     def getUser(self, commandText):
         sqliteConnection = sqlite3.connect(self.data_path)
         DbCursor = sqliteConnection.cursor()
-        returnedText = DbCursor.execute(commandText)
+        try:
+            returnedText = DbCursor.execute(commandText)
+        except sqlite3.OperationalError:
+            DbCursor.execute(CREATE_TABLE_REQUEST)
+            returnedText = DbCursor.execute(commandText)
         returnedText = returnedText.fetchone()
         DbCursor.close()
         sqliteConnection.close()
@@ -44,13 +55,17 @@ class DataBase:
     def dbCommands(self, commandText):
         sqliteConnection = sqlite3.connect(self.data_path)
         DbCursor = sqliteConnection.cursor()
-        DbCursor.execute(commandText)
+        try:
+            DbCursor.execute(commandText)
+        except sqlite3.OperationalError:
+            DbCursor.execute(CREATE_TABLE_REQUEST)
+            DbCursor.execute(commandText)
         sqliteConnection.commit()
         DbCursor.close()
         sqliteConnection.close()
 
 
-def user_login(database, user_id, login_date, gpt_type="default") -> User:
+def user_login(database, user_id, login_date, gpt_type="default_gpt") -> User:
     """
     :type database: DataBase
     :type user_id: str or int

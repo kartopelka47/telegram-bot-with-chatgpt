@@ -15,6 +15,11 @@ ukrainisation = {
     "en":"Ukrainisation"
 }
 
+select_gpt_type = {
+    "uk":"Оберіть тип gpt",
+    "en":"Select a gpt type"
+}
+
 default = {
     "uk":"Стандартний",
     "en":"Default"
@@ -52,6 +57,7 @@ commands_list = {
 /language - мова
 /feedback - зворотній зв'язок
 /search - пошук
+/type - вибрати тип GPT, який ви бажаєте
     """,
     "en":"""
 /start - start working with the bot
@@ -60,6 +66,7 @@ commands_list = {
 /language - change language
 /feedback - feedback
 /search - search 
+/type - select the type of GPT you want
 """
 }
 

@@ -28,7 +28,6 @@ def user_from_tgUrl(language,url) -> types.inline_keyboard.InlineKeyboardMarkup:
 def change_bot_type(language) -> types.inline_keyboard.InlineKeyboardMarkup:
     """
     :type language: str
-    :return:
     """
     markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=1)
     default_gpt = types.inline_keyboard.InlineKeyboardButton(localization.default[language],
@@ -37,3 +36,4 @@ def change_bot_type(language) -> types.inline_keyboard.InlineKeyboardMarkup:
                                                                callback_data="ukrainisation_gpt")
     markup.add(default_gpt, ukrainisation)
     return markup
+

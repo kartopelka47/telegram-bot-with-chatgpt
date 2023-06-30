@@ -16,8 +16,8 @@ BOT_NAME = os.environ.get("BOT_NAME")
 
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")  # Telegram_API_Token
 OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")  # openAI_API_Token
-ADMIN_USER = os.environ.get("ADMIN_USER")
-HASH_SALT = os.environ.get("SALT")
+ADMIN_USER = os.environ.get("ADMIN_USER") # telegram id for admin user
+HASH_SALT = os.environ.get("SALT")     # salt for hash
 database = user_data.DataBase(user_data.DATA_FILE_PATH)
 
 storage = MemoryStorage()
@@ -58,6 +58,10 @@ async def check_message_for_func(message, state):
     elif message.text == "/language":
         await state.finish()
         await choose_language(message)
+        return True
+    elif message.text == "/type":
+        await state.finish()
+        await change_type(message)
         return True
 
 
@@ -120,12 +124,13 @@ async def search_query(message: types.Message, state: FSMContext):
 
     chat = chatGPT.GPT(OPENAI_API_TOKEN, message.text)
     chat.request_text = message.text
-    try:
-        response = await chat.standart_request()
-    except openai.error.RateLimitError:
-        response = localization.try_again_later[user.language]
-    except openai.error.ServiceUnavailableError:
-        response = localization.service_unavailable_error[user.language]
+    response = await chat.choose_gpt_type(user.GPT_type)
+    # try:
+    #     response = await chat.standart_request()
+    # except openai.error.RateLimitError:
+    #     response = localization.try_again_later[user.language]
+    # except openai.error.ServiceUnavailableError:
+    #     response = localization.service_unavailable_error[user.language]
     await bot.send_message(user.id, response)
     await state.finish()
 
@@ -142,7 +147,8 @@ async def start_command(message: types.Message):
 @dp.message_handler(types.ChatType.is_private, commands="type")
 async def change_type(message: types.Message):
     user = user_data.user_login(database, message.from_user.id, message.date.strftime("%H:%M %d.%m.%y"))
-#     доробити
+    await bot.send_message(user.id, localization.select_gpt_type[user.language],
+                           reply_markup=menu.change_bot_type(user.language))
 
 
 @dp.callback_query_handler()
@@ -150,10 +156,14 @@ async def callback_handler(callback_query: types.CallbackQuery):
     user = user_data.user_login(database, callback_query.from_user.id,
                                 callback_query.message.date.strftime("%H:%M %d.%m.%y"))
 
-    if callback_query.data == "uk" or "en":
+    if callback_query.data == "uk" or callback_query.data == "en":
         user.language = callback_query.data
         database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.hash_id}'")
         await bot.send_message(user.id, localization.choosed_language[user.language])
+        return
+    elif callback_query.data == "default_gpt" or callback_query.data == "ukrainisation_gpt":
+        user.GPT_type = callback_query.data
+        database.dbCommands(f"update `user` set `gpt_type`='{user.GPT_type}' where `user_id`='{user.hash_id}'")
         return
 
 

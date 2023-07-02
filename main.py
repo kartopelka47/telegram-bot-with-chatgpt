@@ -1,5 +1,4 @@
 import os
-
 import aiogram
 import openai
 from aiogram import Bot, Dispatcher, executor, types
@@ -11,13 +10,14 @@ import localization
 import chatGPT
 import user_data
 import menu
+import config
 
-BOT_NAME = os.environ.get("BOT_NAME")
+BOT_NAME = config.BOT_NAME
 
-TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")  # Telegram_API_Token
-OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")  # openAI_API_Token
-ADMIN_USER = os.environ.get("ADMIN_USER") # telegram id for admin user
-HASH_SALT = os.environ.get("SALT")     # salt for hash
+TELEGRAM_API_TOKEN = config.TELEGRAM_API_TOKEN
+OPENAI_API_TOKEN = config.OPENAI_API_TOKEN
+ADMIN_USER = config.ADMIN_USER
+HASH_SALT = config.HASH_SALT
 database = user_data.DataBase(user_data.DATA_FILE_PATH)
 
 storage = MemoryStorage()

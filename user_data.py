@@ -1,17 +1,13 @@
 import os
 import sqlite3
 import pyargon2
+import config
 
-DATA_FILE_PATH = "users_info.sqlite"
-HASH_SALT = os.environ.get("SALT")
-CREATE_TABLE_REQUEST = """CREATE TABLE "user" (
-	"id"	INTEGER NOT NULL UNIQUE,
-	"user_id"	TEXT NOT NULL UNIQUE,
-	"language"	INTEGER NOT NULL DEFAULT 'en',
-	"join_date"	TEXT NOT NULL,
-	"gpt_type"	TEXT NOT NULL DEFAULT 'default_gpt',
-	PRIMARY KEY("id" AUTOINCREMENT)
-)"""
+
+DATA_FILE_PATH = config.DATA_FILE_PATH
+HASH_SALT = config.HASH_SALT
+CREATE_TABLE_REQUEST = config.CREATE_TABLE_REQUEST
+
 
 class User:
     def __init__(self, user_id, language, join_date, gpt_type):

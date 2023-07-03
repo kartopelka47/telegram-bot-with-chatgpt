@@ -23,15 +23,16 @@ storage = MemoryStorage()
 logging.basicConfig(level=logging.INFO)
 
 
+bot = Bot(token=TELEGRAM_API_TOKEN)
+# for pythonanywhere use this:
+# bot = Bot(token=TELEGRAM_API_TOKEN,proxy='http://proxy.server:3128')
+dp = Dispatcher(bot, storage=storage)
+
+
 class States(StatesGroup):
     search_info = State()
     feedback_state = State()
     send_message_state = State()
-
-
-bot = Bot(token=TELEGRAM_API_TOKEN)
-dp = Dispatcher(bot, storage=storage)
-
 
 async def check_message_for_func(message, state):
     if message.text == "/search":

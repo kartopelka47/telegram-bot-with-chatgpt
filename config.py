@@ -4,6 +4,7 @@ OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")
 ADMIN_USER = os.environ.get("ADMIN_USER")
 HASH_SALT = os.environ.get("SALT")
 BOT_NAME = os.environ.get("BOT_NAME")
+TIME_FORMAT = "%H:%M %d.%m.%y"
 DATA_FILE_PATH = "users_info.sqlite"
 CREATE_TABLE_REQUEST = """CREATE TABLE "user" (
 	"id"	INTEGER NOT NULL UNIQUE,

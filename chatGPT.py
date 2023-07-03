@@ -21,8 +21,7 @@ class GPT:
                                    messages=[
                                        {"role": "user", "content": self.request_text}
                                    ],
-                                   temperature=0
-                                   )
+                                   temperature=0)
         received_text = response["choices"][0]["message"]["content"]
         self.received_text = received_text
         return received_text
@@ -38,8 +37,7 @@ class GPT:
                                {"role": "user", "content": self.request_text},
                                {"role": "system", "content": "You must speak only Ukrainian"}
                            ],
-                           temperature=0
-                            )
+                           temperature=0)
         received_text = response["choices"][0]["message"]["content"]
         self.received_text = received_text
         return received_text
@@ -54,9 +52,3 @@ class GPT:
         elif gpt_type == "ukrainisation_gpt":
             text = await self.ukrainisation_request()
             return text
-
-    # dict_of_gpt_type = {
-    #     "default_gpt": lambda: GPT.standart_request(),
-    #     "ukrainisation_gpt": lambda: GPT.ukrainisation_request()
-    # }
-

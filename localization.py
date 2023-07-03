@@ -105,3 +105,14 @@ processing_request = {
     "uk":"Очікуйте, обробляємо запит...",
     "en":"Wait, processing the request..."
 }
+
+choosed_types = {
+    "uk":{
+        "ukrainisation_gpt":"Ви обрали українізовану версію",
+        "default_gpt":"Ви обрали стандартну версію"
+    },
+    "en":{
+        "ukrainisation_gpt":"You have selected the Ukrainianised version",
+        "default_gpt":"You have selected the standard version"
+    }
+}

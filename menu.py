@@ -36,4 +36,3 @@ def change_bot_type(language) -> types.inline_keyboard.InlineKeyboardMarkup:
                                                                callback_data="ukrainisation_gpt")
     markup.add(default_gpt, ukrainisation)
     return markup
-

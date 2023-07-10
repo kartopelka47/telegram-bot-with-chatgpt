@@ -3,6 +3,7 @@ import os
 TELEGRAM_API_TOKEN = os.environ.get("TELEGRAM_API_TOKEN")
 OPENAI_API_TOKEN = os.environ.get("OPENAI_API_TOKEN")
 ADMIN_USER = os.environ.get("ADMIN_USER")
+PAYMENT_LINK = os.environ.get("PAYMENT_LINK")
 HASH_SALT = os.environ.get("SALT")
 BOT_NAME = os.environ.get("BOT_NAME")
 TIME_FORMAT = "%H:%M %d.%m.%y"

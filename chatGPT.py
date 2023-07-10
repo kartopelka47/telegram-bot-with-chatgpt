@@ -33,10 +33,10 @@ class GPT:
         openai.api_key = self.token
         MODEL = "gpt-3.5-turbo"
         response = await to_thread(openai.ChatCompletion.create, model=MODEL,
-                            messages=[
-                               {"role": "user", "content": self.request_text},
-                               {"role": "system", "content": "You must speak only Ukrainian"}
-                           ],
+                                    messages=[
+                                     {"role": "user", "content": self.request_text},
+                                     {"role": "system", "content": "You must speak only Ukrainian"}
+                                    ],
                            temperature=0)
         received_text = response["choices"][0]["message"]["content"]
         self.received_text = received_text

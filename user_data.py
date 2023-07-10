@@ -1,4 +1,5 @@
-import os
+from Crypto.Cipher import Salsa20
+
 import sqlite3
 import pyargon2
 import config

@@ -60,8 +60,18 @@ async def check_message_for_func(message):
     elif message.text == "/stats":
         await bot_stats_command(message)
         return True
+    elif message.text == "/payment":
+        await payment_help(message)
+        return True
     elif message.text == "/cancel":
         return True
+
+
+@dp.message_handler(types.ChatType.is_private, commands="payment")
+async def payment_help(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
+    await bot.send_message(user.id, localization.payment_help[user.language],
+                           reply_markup=menu.payment_help_button(user.language))
 
 
 @dp.message_handler(types.ChatType.is_private, commands="info")

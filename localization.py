@@ -1,5 +1,5 @@
 import user_data
-from main import BOT_NAME
+from config import BOT_NAME
 
 
 database = user_data.DataBase(user_data.DATA_FILE_PATH)
@@ -103,6 +103,8 @@ commands_list = {
 /search - пошук
 /type - вибрати тип GPT, який ви бажаєте
 /profile - ваш профіль
+/payment - фінансова допомога
+/cancel - відмінити поточну дію
     """,
     "en":"""
 /start - start working with the bot
@@ -113,6 +115,8 @@ commands_list = {
 /search - search 
 /type - select the type of GPT you want
 /profile - your profile
+/payment - financial support
+/cancel - cancel currently operation
 """
 }
 
@@ -173,3 +177,12 @@ action_canceled = {
     "en":"Action canceled"
 }
 
+payment_help = {
+    "uk":"Якщо ви бажаєте допомогти в розробці бота, то станьте нашим патроном",
+    "en":"If you want to help with the development of the bot, become our patron"
+}
+
+help_translate = {
+    "uk":"Допомогти",
+    "en":"Help"
+}

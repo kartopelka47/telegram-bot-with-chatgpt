@@ -1,4 +1,6 @@
 from aiogram import types
+
+import config
 import localization
 
 
@@ -35,6 +37,17 @@ def change_bot_type(language) -> types.inline_keyboard.InlineKeyboardMarkup:
     ukrainisation = types.inline_keyboard.InlineKeyboardButton(localization.ukrainisation[language],
                                                                callback_data="ukrainisation_gpt")
     markup.add(default_gpt, ukrainisation)
+    return markup
+
+
+def payment_help_button(language) -> types.inline_keyboard.InlineKeyboardMarkup:
+    """
+    :type language: str
+    """
+    markup = types.inline_keyboard.InlineKeyboardMarkup(row_width=1)
+    payment_button = types.inline_keyboard.InlineKeyboardButton(localization.help_translate[language],
+                                                                url=config.PAYMENT_LINK)
+    markup.add(payment_button)
     return markup
 
 

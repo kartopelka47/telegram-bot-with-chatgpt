@@ -17,7 +17,7 @@ class User:
         :type language: str
         :type join_date: str | int
         """
-        self.id = user_id
+        self.id = str(user_id)
         self.language = language
         self.join_date = str(join_date)
         self.hash_id = hash_text(str(user_id), str(HASH_SALT))
@@ -29,13 +29,13 @@ class DataBase:
         self.data_path = data_path
 
     def IsNewbie(self, id):
-        user = self.getUser(
+        user = self.get_info_from_database(
             f"select `user_id` from `user` where `user_id` = '{id}'")
         if not user:
             return True
         return False
 
-    def getUser(self, commandText):
+    def get_info_from_database(self, commandText):
         sqliteConnection = sqlite3.connect(self.data_path)
         DbCursor = sqliteConnection.cursor()
         try:
@@ -75,7 +75,7 @@ def user_login(database, user_id, login_date, gpt_type="default_gpt") -> User:
         database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`,`gpt_type`)
                         VALUES ('{user.hash_id}','{user.language}','{user.join_date}','{user.GPT_type}')""")
     else:
-        received_user_info = database.getUser(
+        received_user_info = database.get_info_from_database(
             f"select `language`,`join_date`,`gpt_type` from `user` where `user_id` = '{user.hash_id}'")
         user_language = received_user_info[0]
         user_join_date = received_user_info[1]

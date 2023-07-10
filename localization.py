@@ -1,4 +1,48 @@
+import user_data
 from main import BOT_NAME
+
+
+database = user_data.DataBase(user_data.DATA_FILE_PATH)
+
+
+async def user_profile(user) -> str:
+    """
+    :type user: user_data.User
+    """
+    user_profile_dict = {
+        "uk":f"""
+Id: <code>{user.id}</code>
+Мова: {user.language}
+Дата приєднання: {user.join_date}
+GPT тип: {user.GPT_type}
+        """,
+        "en":f"""
+Id: <code>{user.id}</code>
+Language: {user.language}
+Date of joining: {user.join_date}
+GPT type: {user.GPT_type}"""
+    }
+    return user_profile_dict[user.language]
+
+
+async def bot_info(language) -> str:
+    """
+    :type language: user_data.User.language
+    """
+    _info = database.get_info_from_database("SELECT count(user_id),SUM(`requests`) FROM user")
+    user_count = _info[0]
+    requests_count = _info[1]
+    bot_info_dict = {
+        "uk": f"""
+Кількість користувачів: {user_count}
+Кількість запитів: {requests_count}
+            """,
+        "en": f"""
+Count of users: {user_count}
+Count of requests: {requests_count}"""
+    }
+    return bot_info_dict[language]
+
 
 choose_language = {
     "uk":"Оберіть мову",
@@ -58,6 +102,7 @@ commands_list = {
 /feedback - зворотній зв'язок
 /search - пошук
 /type - вибрати тип GPT, який ви бажаєте
+/profile - ваш профіль
     """,
     "en":"""
 /start - start working with the bot
@@ -67,6 +112,7 @@ commands_list = {
 /feedback - feedback
 /search - search 
 /type - select the type of GPT you want
+/profile - your profile
 """
 }
 

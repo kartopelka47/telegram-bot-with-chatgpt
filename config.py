@@ -12,5 +12,6 @@ CREATE_TABLE_REQUEST = """CREATE TABLE "user" (
 	"language"	INTEGER NOT NULL DEFAULT 'en',
 	"join_date"	TEXT NOT NULL,
 	"gpt_type"	TEXT NOT NULL DEFAULT 'default_gpt',
+	"requests"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT)
-)"""
+);"""

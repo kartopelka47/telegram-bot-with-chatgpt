@@ -162,3 +162,14 @@ choosed_types = {
         "default_gpt":"You have selected the standard version"
     }
 }
+
+message_with_cancel = {
+    "uk":"Якщо ви хочете відмінити дію, напишіть /cancel",
+    "en":"If you want to cancel the action, write /cancel"
+}
+
+action_canceled = {
+    "uk":"Дію відхилену",
+    "en":"Action canceled"
+}
+

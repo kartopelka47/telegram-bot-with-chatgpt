@@ -36,3 +36,11 @@ def change_bot_type(language) -> types.inline_keyboard.InlineKeyboardMarkup:
                                                                callback_data="ukrainisation_gpt")
     markup.add(default_gpt, ukrainisation)
     return markup
+
+
+def cancel_button() -> types.reply_keyboard.ReplyKeyboardMarkup:
+    markup = types.reply_keyboard.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, one_time_keyboard=True)
+    cancel = types.reply_keyboard.KeyboardButton("/cancel")
+    markup.add(cancel)
+    return markup
+

@@ -1,12 +1,8 @@
-from Crypto.Cipher import Salsa20
-
 import sqlite3
-import pyargon2
 import config
 
 
 DATA_FILE_PATH = config.DATA_FILE_PATH
-HASH_SALT = config.HASH_SALT
 CREATE_TABLE_REQUEST = config.CREATE_TABLE_REQUEST
 
 
@@ -21,7 +17,6 @@ class User:
         self.id = str(user_id)
         self.language = language
         self.join_date = str(join_date)
-        self.hash_id = hash_text(str(user_id), str(HASH_SALT))
         self.GPT_type = gpt_type
 
 
@@ -44,10 +39,11 @@ class DataBase:
         except sqlite3.OperationalError:
             DbCursor.execute(CREATE_TABLE_REQUEST)
             returnedText = DbCursor.execute(commandText)
-        returnedText = returnedText.fetchone()
+        returnedText = returnedText.fetchall()
         DbCursor.close()
         sqliteConnection.close()
         return returnedText
+
 
     def dbCommands(self, commandText):
         sqliteConnection = sqlite3.connect(self.data_path)
@@ -72,24 +68,14 @@ def user_login(database, user_id, login_date, gpt_type="default_gpt") -> User:
     user = User(user_id, "en", str(login_date), gpt_type)
 
     # load data about current user
-    if database.IsNewbie(user.hash_id):
+    if database.IsNewbie(user.id):
         database.dbCommands(f"""INSERT INTO `user`(`user_id`,`language`,`join_date`,`gpt_type`)
-                        VALUES ('{user.hash_id}','{user.language}','{user.join_date}','{user.GPT_type}')""")
+                        VALUES ('{user.id}','{user.language}','{user.join_date}','{user.GPT_type}')""")
     else:
         received_user_info = database.get_info_from_database(
-            f"select `language`,`join_date`,`gpt_type` from `user` where `user_id` = '{user.hash_id}'")
-        user_language = received_user_info[0]
-        user_join_date = received_user_info[1]
-        user_gpt_type = received_user_info[2]
+            f"select `language`,`join_date`,`gpt_type` from `user` where `user_id` = '{user.id}'")
+        user_language = received_user_info[0][0]
+        user_join_date = received_user_info[0][1]
+        user_gpt_type = received_user_info[0][2]
         user = User(user_id, user_language, user_join_date, user_gpt_type)
     return user
-
-
-def hash_text(text, salt) -> str:
-    """
-    :type text: str
-    :type salt: str
-    """
-    _hash_text = pyargon2.hash(str(text), str(salt), hash_len=32, time_cost=1,
-                               memory_cost=16, variant="id", parallelism=2)
-    return _hash_text

@@ -14,7 +14,6 @@ BOT_NAME = config.BOT_NAME
 TELEGRAM_API_TOKEN = config.TELEGRAM_API_TOKEN
 OPENAI_API_TOKEN = config.OPENAI_API_TOKEN
 ADMIN_USER = config.ADMIN_USER
-HASH_SALT = config.HASH_SALT
 TIME_FORMAT = config.TIME_FORMAT
 
 database = user_data.DataBase(user_data.DATA_FILE_PATH)
@@ -60,10 +59,14 @@ async def check_message_for_func(message):
     elif message.text == "/stats":
         await bot_stats_command(message)
         return True
+    elif message.text == "/message":
+        await send_global_message(message)
+        return True
     elif message.text == "/payment":
         await payment_help(message)
         return True
     elif message.text == "/cancel":
+        await cancel_command(message)
         return True
 
 
@@ -80,10 +83,22 @@ async def info_about_bot(message: types.Message):
     await bot.send_message(user.id, localization.info[user.language])
 
 
+@dp.message_handler(types.ChatType.is_private, commands="message")
+async def send_global_message(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
+    if user.id == ADMIN_USER:
+        await States.send_message_state.set()
+        await bot.send_message(user.id, localization.send_message[user.language])
+
+
 @dp.message_handler(types.ChatType.is_private, commands="commands")
 async def commands(message: types.Message):
     user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
-    await bot.send_message(user.id, localization.commands_list[user.language])
+    if user.id == ADMIN_USER:
+        await bot.send_message(user.id, localization.admin_command_list[user.language])
+    else:
+        await bot.send_message(user.id, localization.commands_list[user.language])
+
 
 
 @dp.message_handler(types.ChatType.is_private, commands="profile")
@@ -117,11 +132,21 @@ async def search_command(message: types.Message):
 
 @dp.message_handler(types.ChatType.is_private, commands="start")
 async def start_command(message: types.Message):
-    user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
-    if database.IsNewbie(user.hash_id):
+    if database.IsNewbie(message.from_user.id):
+        user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
         await bot.send_message(user.id, localization.choose_language[user.language],
                                reply_markup=menu.get_language_menu())
+    else:
+        user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
+
     await bot.send_message(user.id, localization.greetings[user.language])
+
+
+@dp.message_handler(types.ChatType.is_private, commands="cancel")
+async def cancel_command(message: types.Message):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
+    await bot.send_message(user.id, localization.action_canceled[user.language],
+                           reply_markup=types.reply_keyboard.ReplyKeyboardRemove())
 
 
 @dp.message_handler(types.ChatType.is_private, commands="type")
@@ -146,10 +171,7 @@ async def get_feedback(message: types.Message, state: FSMContext):
 
     if await check_message_for_func(message):
         await state.finish()
-        await bot.send_message(user.id, localization.action_canceled[user.language],
-                               reply_markup=types.reply_keyboard.ReplyKeyboardRemove())
         return
-
     await bot.send_message(admin_user.id, f"""
     {localization.report[admin_user.language]}
 {message.date.strftime(TIME_FORMAT)}
@@ -163,8 +185,6 @@ async def search_query(message: types.Message, state: FSMContext):
     user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
     if await check_message_for_func(message):
         await state.finish()
-        await bot.send_message(user.id, localization.action_canceled[user.language],
-                               reply_markup=types.reply_keyboard.ReplyKeyboardRemove())
         return
     msg = await bot.send_message(user.id, localization.processing_request[user.language],
                                  reply_to_message_id=message.message_id)
@@ -177,7 +197,19 @@ async def search_query(message: types.Message, state: FSMContext):
     except openai.error.ServiceUnavailableError:
         response = localization.service_unavailable_error[user.language]
     await bot.edit_message_text(response, user.id, msg["message_id"])
-    database.dbCommands(f"update `user` set `requests`=`requests`+'1' where `user_id`='{user.hash_id}'")
+    database.dbCommands(f"update `user` set `requests`=`requests`+'1' where `user_id`='{user.id}'")
+
+
+@dp.message_handler(state=States.send_message_state)
+async def send_message_state(message: types.Message, state: FSMContext):
+    user = user_data.user_login(database, message.from_user.id, message.date.strftime(TIME_FORMAT))
+    if user.id == ADMIN_USER:
+        if await check_message_for_func(message):
+            await state.finish()
+            return
+        users_list = database.get_info_from_database("SELECT `user_id` FROM `user`")
+        for x in range(len(users_list)):
+            await bot.send_message(users_list[x][0], message.text)
 
 
 @dp.callback_query_handler()
@@ -187,12 +219,12 @@ async def callback_handler(callback_query: types.CallbackQuery):
 
     if callback_query.data == "uk" or callback_query.data == "en":
         user.language = callback_query.data
-        database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.hash_id}'")
+        database.dbCommands(f"update `user` set `language`='{user.language}' where `user_id`='{user.id}'")
         await bot.send_message(user.id, localization.choosed_language[user.language])
         return
     elif callback_query.data == "default_gpt" or callback_query.data == "ukrainisation_gpt":
         user.GPT_type = callback_query.data
-        database.dbCommands(f"update `user` set `gpt_type`='{user.GPT_type}' where `user_id`='{user.hash_id}'")
+        database.dbCommands(f"update `user` set `gpt_type`='{user.GPT_type}' where `user_id`='{user.id}'")
         await bot.send_message(user.id, localization.choosed_types[user.language][user.GPT_type])
         return
 

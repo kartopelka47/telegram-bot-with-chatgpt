@@ -30,8 +30,8 @@ async def bot_info(language) -> str:
     :type language: user_data.User.language
     """
     _info = database.get_info_from_database("SELECT count(user_id),SUM(`requests`) FROM user")
-    user_count = _info[0]
-    requests_count = _info[1]
+    user_count = _info[0][0]
+    requests_count = _info[0][1]
     bot_info_dict = {
         "uk": f"""
 Кількість користувачів: {user_count}
@@ -121,6 +121,38 @@ commands_list = {
 }
 
 
+admin_command_list = {
+    "uk":"""
+/start - початок роботи з ботом
+/info - інформація про бота
+/commands - список команд
+/language - мова
+/feedback - зворотній зв'язок
+/search - пошук
+/type - вибрати тип GPT, який ви бажаєте
+/profile - ваш профіль
+/payment - фінансова допомога
+/stats - статистика бота
+/message - розсилка повідомлень
+/cancel - відмінити поточну дію
+    """,
+    "en":"""
+/start - start working with the bot
+/info - information about the bot
+/commands - list of commands
+/language - change language
+/feedback - feedback
+/search - search 
+/type - select the type of GPT you want
+/profile - your profile
+/payment - financial support
+/stats - bot statistic
+/message - message distribution
+/cancel - cancel currently operation
+"""
+}
+
+
 greetings = {
     "uk":"Вітаю, більше інформації по команді: /info",
     "en":"Greetings, more information: /info"
@@ -185,4 +217,9 @@ payment_help = {
 help_translate = {
     "uk":"Допомогти",
     "en":"Help"
+}
+
+send_message = {
+    "uk":"Напишіть повідомлення, воно буде переслано всім користувачам бота",
+    "en":"Write a message, it will be sent to all users of the bot"
 }
